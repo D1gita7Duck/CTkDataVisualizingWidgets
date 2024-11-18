@@ -37,6 +37,9 @@ class CTkCalendar(ctk.CTkFrame):
                  calendar_corner_radius=None,
                  calendar_text_color=None,
                  calendar_text_fg_color=None,
+                 calendar_days_fg_color=None,
+                 calendar_dates_state="normal",
+                 calendar_dates_command=None,
                  calendar_label_pad=1):
 
         super().__init__(master=master,
@@ -77,6 +80,9 @@ class CTkCalendar(ctk.CTkFrame):
         self.calendar_corner_radius = calendar_corner_radius
         self.calendar_text_fg_color = calendar_text_fg_color
         self.calendar_text_color = calendar_text_color
+        self.calendar_days_fg_color = calendar_days_fg_color
+        self.calendar_dates_state = calendar_dates_state
+        self.calendar_dates_command = calendar_dates_command
         self.calendar_label_pad = calendar_label_pad
 
         # creating header and calendar frames
@@ -167,18 +173,25 @@ class CTkCalendar(ctk.CTkFrame):
             return True
         return False
 
+    def on_date_click(self, btn_state, date):
+        if btn_state != "disabled":
+            if self.calendar_dates_command is not None:
+                self.calendar_dates_command(date, self.month, self.year)
+
     # creating normal date labels for normal calendar
     def setup_label_normal(self, frame, day, row, column):
         if self.today_fg_color is not None and self.date_is_today((day, self.month, self.year)):
-            ctk.CTkLabel(frame, text=str(day), corner_radius=5,
+            ctk.CTkButton(frame, text=str(day), corner_radius=5,
                          fg_color=self.today_fg_color, font=ctk.CTkFont("Arial", 11),
-                         text_color=self.today_text_color).grid(row=row, column=column, sticky="nsew",
+                         text_color=self.today_text_color, state=self.calendar_dates_state,
+                         command=lambda : self.on_date_click(self.calendar_dates_state, day)).grid(row=row, column=column, sticky="nsew",
                                                                 padx=self.calendar_label_pad,
                                                                 pady=self.calendar_label_pad)
         else:
-            ctk.CTkLabel(frame, text=str(day), corner_radius=5,
+            ctk.CTkButton(frame, text=str(day), corner_radius=5,
                          fg_color=self.calendar_text_fg_color, font=ctk.CTkFont("Arial", 11),
-                         text_color=self.calendar_text_color).grid(row=row, column=column, sticky="nsew",
+                         text_color=self.calendar_text_color, state=self.calendar_dates_state,
+                         command=lambda : self.on_date_click(self.calendar_dates_state, day)).grid(row=row, column=column, sticky="nsew",
                                                                    padx=self.calendar_label_pad,
                                                                    pady=self.calendar_label_pad)
 
@@ -186,7 +199,7 @@ class CTkCalendar(ctk.CTkFrame):
         self.days_of_week = ("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")
         for column in range(7):
             ctk.CTkLabel(frame, text=str(self.days_of_week[column]), corner_radius=5,
-                            fg_color=self.calendar_text_fg_color, font=ctk.CTkFont("Arial", 11),
+                            fg_color=self.calendar_days_fg_color, font=ctk.CTkFont("Arial", 11),
                             text_color=self.calendar_text_color).grid(row=row, column=column, sticky="nsew",
                                                                     padx=self.calendar_label_pad,
                                                                     pady=self.calendar_label_pad)
