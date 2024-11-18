@@ -94,15 +94,19 @@ class CTkCalendar(ctk.CTkFrame):
         ctk.CTkButton(header_frame, text="<", width=25, fg_color=self.title_bar_button_fg_color,
                       hover_color=self.title_bar_button_hover_color, border_color=self.title_bar_button_border_color,
                       border_width=self.title_bar_button_border_width, font=ctk.CTkFont("Arial", 11, "bold"),
-                      command=lambda: self.change_month(-1)).pack(side="left", padx=10)
+                      command=lambda: self.change_month(-1)).pack(side="left", padx=(10,15))
         ctk.CTkLabel(header_frame, textvariable=self.month_label, font=ctk.CTkFont("Arial", 16, "bold"),
-                     fg_color="transparent").pack(side="left", fill="x", expand=True)
+                     fg_color="transparent").pack(side="left", padx=(0,10))
         ctk.CTkLabel(header_frame, textvariable=self.year_label, font=ctk.CTkFont("Arial", 16, "bold"),
-                     fg_color="transparent").pack(side="left", fill="x")
+                     fg_color="transparent").pack(side="left", padx=(0,15))
         ctk.CTkButton(header_frame, text=">", width=25, fg_color=self.title_bar_button_fg_color,
                       hover_color=self.title_bar_button_hover_color, border_color=self.title_bar_button_border_color,
                       border_width=self.title_bar_button_border_width, font=ctk.CTkFont("Arial", 11, "bold"),
-                      command=lambda: self.change_month(1)).pack(side="right", padx=10)
+                      command=lambda: self.change_month(1)).pack(side="left", padx=(0, 10))
+        ctk.CTkButton(header_frame, text="Today", width=75, fg_color=self.title_bar_button_fg_color,
+                      hover_color=self.title_bar_button_hover_color, border_color=self.title_bar_button_border_color,
+                      border_width=self.title_bar_button_border_width, font=ctk.CTkFont("Arial", 13, "bold"),
+                      command=self.go_to_today).pack(side="right", padx=(0, 10))
 
         header_frame.place(relx=0.5, rely=0.02, anchor="n", relheight=0.18, relwidth=0.95)
 
@@ -132,18 +136,26 @@ class CTkCalendar(ctk.CTkFrame):
     def change_month(self, amount):
         self.month += amount
         if self.month < 1:
-            self.year -= 1
-            self.month = 12
+            self.year -= ((12 + (-amount) - 1) //12)
+            self.month = 12 - ((-self.month)%12)
             self.day = 1
         elif self.month > 12:
-            self.year += 1
-            self.month = 1
+            self.year += (amount//12)
+            self.month = self.month%12
             self.day = 1
 
         self.month_label.set(calendar.month_name[self.month][0:3])
         self.year_label.set(self.year)
 
         self.create_calendar_frame()
+    
+    def go_to_today(self):
+        today_month, today_year = self.current_date()[1:]
+        # print(today_month, today_year, self.month, self.year, end=' ** ')
+        del_month = today_month-self.month
+        del_year = self.year - today_year
+        delta = ((del_year*12)-(del_month))
+        self.change_month(-delta)
 
     def current_date(self) -> tuple[int, int, int]:
         date = str(datetime.now()).split()
