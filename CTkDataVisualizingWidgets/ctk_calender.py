@@ -55,7 +55,7 @@ class CTkCalendar(ctk.CTkFrame):
         self.today = self.current_date()
         self.day, self.month, self.year = self.today[:]
         self.labels_by_date = dict()
-        self.month_label = ctk.StringVar(value=calendar.month_name[self.month])
+        self.month_label = ctk.StringVar(value=calendar.month_name[self.month][0:3])
         self.year_label = ctk.IntVar(value=self.year)
 
         # data for title bar
@@ -115,14 +115,17 @@ class CTkCalendar(ctk.CTkFrame):
 
         # grid
         calendar_frame.columnconfigure((0, 1, 2, 3, 4, 5, 6), weight=1, uniform="b")
-        rows = tuple([i for i in range(len(current_month))])
+        rows = tuple([i for i in range(len(current_month)+1)])
         calendar_frame.rowconfigure(rows, weight=1, uniform="b")
 
-        # labels for days
+        # labels for days of the week
+        self.setup_days_of_week_label(calendar_frame, row=0)
+
+        # labels for dates
         for row in range(len(current_month)):
             for column in range(7):
                 if current_month[row][column] != 0:
-                    self.setup_label_normal(calendar_frame, current_month[row][column], row, column)
+                    self.setup_label_normal(calendar_frame, current_month[row][column], row+1, column)
 
         calendar_frame.place(relx=0.5, rely=0.97, anchor="s", relheight=0.75, relwidth=0.95)
 
@@ -137,7 +140,7 @@ class CTkCalendar(ctk.CTkFrame):
             self.month = 1
             self.day = 1
 
-        self.month_label.set(calendar.month_name[self.month])
+        self.month_label.set(calendar.month_name[self.month][0:3])
         self.year_label.set(self.year)
 
         self.create_calendar_frame()
@@ -166,3 +169,12 @@ class CTkCalendar(ctk.CTkFrame):
                          text_color=self.calendar_text_color).grid(row=row, column=column, sticky="nsew",
                                                                    padx=self.calendar_label_pad,
                                                                    pady=self.calendar_label_pad)
+
+    def setup_days_of_week_label(self, frame, row):
+        self.days_of_week = ("Mo", "Tu", "We", "Th", "Fr", "Sa", "Su")
+        for column in range(7):
+            ctk.CTkLabel(frame, text=str(self.days_of_week[column]), corner_radius=5,
+                            fg_color=self.calendar_text_fg_color, font=ctk.CTkFont("Arial", 11),
+                            text_color=self.calendar_text_color).grid(row=row, column=column, sticky="nsew",
+                                                                    padx=self.calendar_label_pad,
+                                                                    pady=self.calendar_label_pad)
