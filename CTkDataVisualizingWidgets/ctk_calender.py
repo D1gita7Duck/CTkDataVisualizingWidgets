@@ -147,7 +147,7 @@ class CTkCalendar(ctk.CTkFrame):
             self.day = 1
         elif self.month > 12:
             self.year += (amount//12) if (amount//12) > 0 else 1
-            self.month = self.month%12
+            self.month =  12 if (self.month%12 == 0) else self.month%12
             self.day = 1
 
         self.month_label.set(calendar.month_name[self.month][0:3])
