@@ -5,12 +5,6 @@ import tkinter as tk
 
 
 class CTkCalendar(ctk.CTkFrame):
-    """
-    Calendar widget to display certain month, each day is rendered as Button.\n
-    If you do not define today_fg_color, today_text_color and date_highlight_color it will be rendered as other days.\n
-    Default format for a week is Sun ... Sat. Can be changed to Mon ... Sun by passing calendar_monday_first=True\n
-
-    """
     def __init__(self, master,
                  today_fg_color=None,
                  today_text_color=None,
@@ -44,7 +38,11 @@ class CTkCalendar(ctk.CTkFrame):
                  calendar_dates_command=None,
                  calendar_monday_first = False,
                  calendar_label_pad=1):
-
+        """
+        Calendar widget to display certain month, each day is rendered as Button.\n
+        If you do not define today_fg_color, today_text_color and date_highlight_color it will be rendered as other days.\n
+        Default format for a week is Sun ... Sat. Can be changed to Mon ... Sun by passing calendar_monday_first=True\n
+        """
         super().__init__(master=master,
                          width=width,
                          height=height,
