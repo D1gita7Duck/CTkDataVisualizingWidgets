@@ -228,7 +228,8 @@ class CTkCalendar(ctk.CTkFrame):
         if btn_state != "disabled":
             if self.highlighted_btn is not None:
                 self.highlighted_btn.configure(fg_color = ctk.ThemeManager.theme["CTkButton"]["fg_color"])
-            button.configure(fg_color = self.date_highlight_color)
+            if self.date_highlight_color is not None:
+                button.configure(fg_color = self.date_highlight_color)
             self.highlighted_btn = button
             if self.calendar_dates_command is not None:
                 self.calendar_dates_command(date, self.month, self.year)
