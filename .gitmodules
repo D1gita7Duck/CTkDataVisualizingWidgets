@@ -1,0 +1,3 @@
+[submodule "CTkToolTip"]
+	path = CTkToolTip
+	url = https://github.com/Akascape/CTkToolTip.git

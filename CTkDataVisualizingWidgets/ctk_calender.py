@@ -1,15 +1,15 @@
 import customtkinter as ctk
 import calendar
 from datetime import datetime
-import tkinter as tk
+import CTkToolTip.CTkToolTip.ctk_tooltip as tt
 
 
 class CTkCalendar(ctk.CTkFrame):
     def __init__(self, master,
                  today_fg_color=None,
                  today_text_color=None,
-                 width=250,
-                 height=250,
+                 width=300,
+                 height=300,
                  fg_color=None,
                  corner_radius=8,
                  border_width=None,
@@ -37,7 +37,8 @@ class CTkCalendar(ctk.CTkFrame):
                  calendar_dates_state="normal",
                  calendar_dates_command=None,
                  calendar_monday_first = False,
-                 calendar_label_pad=1):
+                 calendar_btns_pad=1,
+                 show_tooltips : bool = True):
         """
         Calendar widget to display certain month, each day is rendered as Button.\n
         If you do not define today_fg_color, today_text_color and date_highlight_color it will be rendered as other days.\n
@@ -60,9 +61,11 @@ class CTkCalendar(ctk.CTkFrame):
         self.highlighted_btn : ctk.CTkButton = None
         self.today = self.current_date()
         self.day, self.month, self.year = self.today[:]
+        self.months_list = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
         self.labels_by_date = dict()
-        self.month_label = ctk.StringVar(value=calendar.month_name[self.month][0:3])
-        self.year_label = ctk.IntVar(value=self.year)
+        self.month_var = ctk.StringVar(value=calendar.month_name[self.month][0:3])
+        self.year_var = ctk.StringVar(value=self.year)
+        self.show_tooltips = show_tooltips
 
         # data for title bar
         self.title_bar_fg_color = title_bar_fg_color
@@ -86,7 +89,7 @@ class CTkCalendar(ctk.CTkFrame):
         self.calendar_days_fg_color = calendar_days_fg_color
         self.calendar_dates_state = calendar_dates_state
         self.calendar_dates_command = calendar_dates_command
-        self.calendar_label_pad = calendar_label_pad
+        self.calendar_btns_pad = calendar_btns_pad
         self.calendar_monday_first = calendar_monday_first
 
         # creating header and calendar frames
@@ -94,31 +97,52 @@ class CTkCalendar(ctk.CTkFrame):
         self.content_frame.pack(expand=True, fill="both", padx=corner_radius/3, pady=corner_radius/3)
         self.setup_header_frame()
         self.create_calendar_frame()
+        self.create_bindings()
+
+        if self.show_tooltips:
+            self.create_tooltips()
 
     # setting up the header frame
     def setup_header_frame(self):
-        header_frame = ctk.CTkFrame(self.content_frame, fg_color=self.title_bar_fg_color,
+        self.header_frame = ctk.CTkFrame(self.content_frame, fg_color=self.title_bar_fg_color,
                                     corner_radius=self.title_bar_corner_radius,
                                     border_color=self.title_bar_border_color, border_width=self.title_bar_border_width)
+        
+        self.header_frame.month_option_menu = ctk.CTkOptionMenu(master=self.header_frame,
+                                              width=30,
+                                              height=30,
+                                              values=self.months_list,
+                                              variable=self.month_var,
+                                              command=self.change_month_from)
+        self.header_frame.month_option_menu.pack(side="left", padx=(10,15))
 
-        ctk.CTkButton(header_frame, text="<", width=25, fg_color=self.title_bar_button_fg_color,
+        self.header_frame.previous_year_btn = ctk.CTkButton(self.header_frame,
+                                          text="<",
+                                          width=25,
+                                          fg_color=self.title_bar_button_fg_color,
+                                          hover_color=self.title_bar_button_hover_color,
+                                          border_color=self.title_bar_button_border_color,
+                                          border_width=self.title_bar_button_border_width,
+                                          font=ctk.CTkFont("Arial", 11, "bold"),
+                                          command=lambda: self.change_month(-12))
+        self.header_frame.previous_year_btn.pack(side="left", padx=(5,5))
+
+        self.header_frame.year_entry = ctk.CTkEntry(master=self.header_frame, width=45, height=30, textvariable=self.year_var)
+        self.header_frame.year_entry.pack(side="left", padx=(0,5))
+        
+        self.header_frame.next_year_btn = ctk.CTkButton(self.header_frame, text=">", width=25, fg_color=self.title_bar_button_fg_color,
                       hover_color=self.title_bar_button_hover_color, border_color=self.title_bar_button_border_color,
                       border_width=self.title_bar_button_border_width, font=ctk.CTkFont("Arial", 11, "bold"),
-                      command=lambda: self.change_month(-1)).pack(side="left", padx=(10,15))
-        ctk.CTkLabel(header_frame, textvariable=self.month_label, font=ctk.CTkFont("Arial", 16, "bold"),
-                     fg_color="transparent").pack(side="left", padx=(0,10))
-        ctk.CTkLabel(header_frame, textvariable=self.year_label, font=ctk.CTkFont("Arial", 16, "bold"),
-                     fg_color="transparent").pack(side="left", padx=(0,15))
-        ctk.CTkButton(header_frame, text=">", width=25, fg_color=self.title_bar_button_fg_color,
-                      hover_color=self.title_bar_button_hover_color, border_color=self.title_bar_button_border_color,
-                      border_width=self.title_bar_button_border_width, font=ctk.CTkFont("Arial", 11, "bold"),
-                      command=lambda: self.change_month(1)).pack(side="left", padx=(0, 10))
-        ctk.CTkButton(header_frame, text="Today", width=75, fg_color=self.title_bar_button_fg_color,
+                      command=lambda: self.change_month(12))
+        self.header_frame.next_year_btn.pack(side="left", padx=(0, 10))
+
+        self.header_frame.today_btn = ctk.CTkButton(self.header_frame, text="Today", width=60, fg_color=self.title_bar_button_fg_color,
                       hover_color=self.title_bar_button_hover_color, border_color=self.title_bar_button_border_color,
                       border_width=self.title_bar_button_border_width, font=ctk.CTkFont("Arial", 13, "bold"),
-                      command=self.go_to_today).pack(side="right", padx=(0, 10))
+                      command=self.go_to_today)
+        self.header_frame.today_btn.pack(side="right", padx=(10,10))
 
-        header_frame.place(relx=0.5, rely=0.02, anchor="n", relheight=0.18, relwidth=0.95)
+        self.header_frame.place(relx=0.5, rely=0.02, anchor="n", relheight=0.18, relwidth=0.95)
 
     def create_calendar_frame(self):
         # "updating" frames
@@ -195,15 +219,26 @@ class CTkCalendar(ctk.CTkFrame):
             self.month =  12 if (self.month%12 == 0) else self.month%12
             self.day = 1
 
-        self.month_label.set(calendar.month_name[self.month][0:3])
-        self.year_label.set(self.year)
+        self.month_var.set(calendar.month_name[self.month][0:3])
+        self.year_var.set(str(self.year))
 
+        self.create_calendar_frame()
+
+    def change_month_from(self, month : str):
+        self.month_var.set(month)
+        self.month = self.months_list.index(month) + 1
+        self.create_calendar_frame()
+    
+    def change_year_from(self, event = None):
+        if int(self.year_var.get()) < 1:
+            raise ValueError("Given year doesn't exist even though calendar module provides it")
+        self.year = int(self.year_var.get())
         self.create_calendar_frame()
     
     def go_to_today(self):
         self.month, self.year = self.current_date()[1:]
-        self.month_label.set(calendar.month_name[self.month][0:3])
-        self.year_label.set(self.year)
+        self.month_var.set(calendar.month_name[self.month][0:3])
+        self.year_var.set(str(self.year))
         self.create_calendar_frame()
 
     def go_to_today2(self):
@@ -241,7 +276,7 @@ class CTkCalendar(ctk.CTkFrame):
                          fg_color=self.today_fg_color, font=ctk.CTkFont("Arial", 11),
                          text_color=self.today_text_color, state=self.calendar_dates_state,
                          command=lambda : self.on_date_click(btn, self.calendar_dates_state, day))
-            btn.grid(row=row, column=column, sticky="nsew", padx=self.calendar_label_pad, pady=self.calendar_label_pad)
+            btn.grid(row=row, column=column, sticky="nsew", padx=self.calendar_btns_pad, pady=self.calendar_btns_pad)
             
 
         else:
@@ -249,7 +284,7 @@ class CTkCalendar(ctk.CTkFrame):
                          fg_color=self.calendar_text_fg_color, font=ctk.CTkFont("Arial", 11),
                          text_color=self.calendar_text_color, state=self.calendar_dates_state,
                          command=lambda : self.on_date_click(btn, self.calendar_dates_state, day))
-            btn.grid(row=row, column=column, sticky="nsew", padx=self.calendar_label_pad, pady=self.calendar_label_pad)
+            btn.grid(row=row, column=column, sticky="nsew", padx=self.calendar_btns_pad, pady=self.calendar_btns_pad)
 
     def setup_days_of_week_label(self, frame, row : int, monday_first : bool):
         if monday_first:
@@ -260,5 +295,16 @@ class CTkCalendar(ctk.CTkFrame):
             ctk.CTkLabel(frame, text=str(self.days_of_week[column]), corner_radius=5,
                             fg_color=self.calendar_days_fg_color, font=ctk.CTkFont("Arial", 11),
                             text_color=self.calendar_text_color).grid(row=row, column=column, sticky="nsew",
-                                                                    padx=self.calendar_label_pad,
-                                                                    pady=self.calendar_label_pad)
+                                                                    padx=self.calendar_btns_pad,
+                                                                    pady=self.calendar_btns_pad)
+    
+    def create_bindings(self):
+        self.master.bind("<1>", lambda event: event.widget.focus_set(), add=True)
+        self.header_frame.year_entry.bind("<Return>", self.change_year_from)
+
+    def create_tooltips(self):
+        tt.CTkToolTip(widget=self.header_frame.month_option_menu, message="Choose Month", delay=0.1)
+        tt.CTkToolTip(widget=self.header_frame.previous_year_btn, message="Previous Year", delay=0.1)
+        tt.CTkToolTip(widget=self.header_frame.year_entry, message="Input Year and Press Enter", delay=0.1)
+        tt.CTkToolTip(widget=self.header_frame.next_year_btn, message="Next Year", delay=0.1)
+        tt.CTkToolTip(widget=self.header_frame.today_btn, message="Go to Today", delay=0.1)
