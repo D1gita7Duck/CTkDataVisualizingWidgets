@@ -1,7 +1,7 @@
 import customtkinter as ctk
 import calendar
 from datetime import datetime
-import CTkToolTip.CTkToolTip.ctk_tooltip as tt
+import CTkToolTip.ctk_tooltip as tt
 
 
 class CTkCalendar(ctk.CTkFrame):
